@@ -1,0 +1,47 @@
+{
+    "name": "robertbaelde/hooked",
+    "description": "Laravel webhook package",
+    "require": {
+        "guzzlehttp/guzzle": "^6.3",
+        "illuminate/database": "^5.6",
+        "illuminate/events": "^5.6",
+        "illuminate/support": "^5.6"
+    },
+    "require-dev": {
+        "larapack/dd": "^1.0",
+        "phpunit/phpunit": "^7.0",
+        "orchestra/testbench": "^3.6"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Robert Baelde",
+            "email": "robert@bitscan.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Robertbaelde\\Hooked\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Robertbaelde\\Hooked\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["Robertbaelde\\Hooked\\MongoServiceProvider"],
+            "aliases": {
+                "Hook": "Robertbaelde\\Hooked\\MongoFacade"
+            }
+        }
+    }
+}
