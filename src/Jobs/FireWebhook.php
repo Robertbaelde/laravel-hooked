@@ -38,23 +38,20 @@ class FireWebhook implements ShouldQueue
      */
     public function handle(Client $client)
     {
-        // $event = $this->event;
-        // $webhook = $this->webhook;
+        $event = $this->event;
+        $webhook = $this->webhook;
 
-        // try{
-        //     $response = $client->request($webhook->verb, $webhook->url, [
-        //         'json' => [
-        //             'event' => $event->getWebhookName(),
-        //             'data' => $event->webhookPayload()
-        //         ]
-        //     ]);
-        // }
-        // catch (Exception $e){
-        //     // log failure
-        //     throw $e;
-        // }
-        
-        // dd($this->webhook);
-        // dd($this->event->webhookPayload());
+        try{
+            $response = $client->request($webhook['method'], $webhook['url'], [
+                'json' => [
+                    'data' => $event->webhookPayload()
+                ]
+            ]);
+            // dd($response->getBody()->getContents());
+        }
+        catch (Exception $e){
+            // log failure
+            throw $e;
+        }
     }
 }
