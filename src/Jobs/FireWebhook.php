@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Robertbaelde\Hooked\Events\WebhookSuccessfull;
 use Robertbaelde\Hooked\Interfaces\WebhookEventInterface;
 // use Robertbaelde\Hooked\Jobs\Interfaces\WebhookEventInterface;
 
@@ -47,7 +48,7 @@ class FireWebhook implements ShouldQueue
                     'data' => $event->webhookPayload()
                 ]
             ]);
-            // dd($response->getBody()->getContents());
+            event(new WebhookSuccessfull($event, $webhook, $response));
         }
         catch (Exception $e){
             // log failure
