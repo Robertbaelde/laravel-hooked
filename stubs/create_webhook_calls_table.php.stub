@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateWebhooksCallsTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('webhook_calls', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('webhook_id');
+            $table->integer('response_code');
+            $table->json('response_body');
+            $table->timestamps();
+
+            $table->foreign('webhook_id')->references('id')->on('webhooks');
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('webhook_calls');
+    }
+}

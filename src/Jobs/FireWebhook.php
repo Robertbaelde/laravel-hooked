@@ -47,7 +47,7 @@ class FireWebhook implements ShouldQueue
                     'data' => $webhook->payload
                 ]
             ]);
-            event(new WebhookSuccessfull($webhook, $response));
+            $webhook->logResponse($response);
         }
         catch (ServerException $e){
             event(new WebhookFailed($webhook, $e));

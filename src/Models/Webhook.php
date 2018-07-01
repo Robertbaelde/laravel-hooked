@@ -2,6 +2,7 @@
 
 namespace  Robertbaelde\Hooked\Models;
 
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,11 @@ class Webhook extends Model
     public $casts = [
         'payload' => 'array',
     ];
+
+    public function calls()
+    {
+        return $this->hasMany(WebhookCall::class);
+    }
     // 
     public static function fire(WebhookEventInterface $event, array $webhook)
     {
@@ -28,6 +34,14 @@ class Webhook extends Model
             'payload' => $event->webhookPayload()
         ]);
         FireWebhook::dispatch($self);
+
+    }
+    public function logResponse(Response $response)
+    {
+        return $this->calls()->create([
+            'response_code' => $response->getStatusCode(),
+            'response_body' => $response->getBody()->getContents(),
+        ])->fireEvent();
 
     }
 

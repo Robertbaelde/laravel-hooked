@@ -27,7 +27,7 @@ class FireWebhookTest extends TestCase
 
 		// create guzzle mock
 		$mock = new MockHandler([
-		    new Response(200, []),
+		    new Response(200, [], "{'foo': 'bar'}"),
 		]);
 		$handler = HandlerStack::create($mock);
 
@@ -58,9 +58,17 @@ class FireWebhookTest extends TestCase
 	    $this->assertEquals(['data' => ['foo' => true]], json_decode($request['request']->getBody()->getContents(), true));
 	    $this->assertEquals(200, $request['response']->getStatusCode());
 
-	    Event::assertDispatched(WebhookSuccessfull::class, function ($e) use ($webhookModel) {
-            return $e->webhook->is($webhookModel);
+	    $this->assertEquals(1, $webhookModel->calls->count());
+	    $call = $webhookModel->calls->first();
+	    $this->assertEquals(true, $call->successfull);
+	    $this->assertEquals(200, $call->response_code);
+	    $this->assertEquals("{'foo': 'bar'}", $call->response_body);
+
+	    Event::assertDispatched(WebhookSuccessfull::class, function ($e) use ($call) {
+            return $e->webhookcall->is($call);
         });
+
+
 	}
 
 	/** @test */

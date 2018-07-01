@@ -20,6 +20,12 @@ class HookedServiceProvider extends ServiceProvider
                 ], 'migrations');
             }
 
+            if (! class_exists('CreateWebhookCallsTable')) {
+                $this->publishes([
+                    __DIR__.'/../stubs/create_webhook_calls_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_webhook_calls_table.php'),
+                ], 'migrations');
+            }
+
         // if (! class_exists('CreateProjectorStatusesTable')) {
         //     $this->publishes([
         //         __DIR__.'/../stubs/create_projector_statuses_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_projector_statuses_table.php'),
