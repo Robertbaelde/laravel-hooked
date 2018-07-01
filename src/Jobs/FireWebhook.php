@@ -4,20 +4,20 @@ namespace Robertbaelde\Hooked\Jobs;
 
 // use App\Webhook;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ServerException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Robertbaelde\Hooked\Events\WebhookFailed;
 use Robertbaelde\Hooked\Events\WebhookSuccessfull;
-use Robertbaelde\Hooked\Interfaces\WebhookEventInterface;
-// use Robertbaelde\Hooked\Jobs\Interfaces\WebhookEventInterface;
+use Robertbaelde\Hooked\Models\Webhook;
 
 class FireWebhook implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $event;
     public $webhook;
 
     /**
@@ -25,9 +25,8 @@ class FireWebhook implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(WebhookEventInterface $event, array $webhook)
+    public function __construct(Webhook $webhook)
     {
-        $this->event = $event;
         $this->webhook = $webhook;
 
     }
@@ -39,20 +38,20 @@ class FireWebhook implements ShouldQueue
      */
     public function handle(Client $client)
     {
-        $event = $this->event;
+        // $event = $this->event;
         $webhook = $this->webhook;
 
         try{
-            $response = $client->request($webhook['method'], $webhook['url'], [
+            $response = $client->request($webhook->method, $webhook->url, [
                 'json' => [
-                    'data' => $event->webhookPayload()
+                    'data' => $webhook->payload
                 ]
             ]);
-            event(new WebhookSuccessfull($event, $webhook, $response));
+            event(new WebhookSuccessfull($webhook, $response));
         }
-        catch (Exception $e){
-            // log failure
-            throw $e;
+        catch (ServerException $e){
+            event(new WebhookFailed($webhook, $e));
+            // $this->nextInRetrySchema();
         }
     }
 }

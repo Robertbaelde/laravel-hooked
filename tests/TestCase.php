@@ -43,5 +43,8 @@ abstract class TestCase extends Orchestra
      */
     protected function setUpDatabase($app)
     {
+        Schema::dropIfExists('webhooks');
+        include_once __DIR__.'/../stubs/create_webhooks_table.php.stub';
+        (new \CreateWebhooksTable())->up();
     }
 }

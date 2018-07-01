@@ -4,6 +4,7 @@ namespace Robertbaelde\Hooked\Tests;
 
 use Illuminate\Support\Facades\Queue;
 use Robertbaelde\Hooked\Jobs\FireWebhook;
+use Robertbaelde\Hooked\Models\Webhook;
 use Robertbaelde\Hooked\Tests\Events\TestDefaultEvent;
 
 class EventSubscriberTest extends TestCase
@@ -29,10 +30,16 @@ class EventSubscriberTest extends TestCase
         $event = new TestDefaultEvent();
         event($event);
 
-        Queue::assertPushed(FireWebhook::class, function ($job) use ($event) {
-            $this->assertEquals($job->webhook['url'], 'test.dev');
-            $this->assertEquals($job->webhook['method'], 'POST');
-            return $job->event == $event;
+        $webhookModel = Webhook::first();
+        $this->assertNotNull($webhookModel);
+        $this->assertEquals('POST', $webhookModel->method);
+        $this->assertEquals('test.dev', $webhookModel->url);
+        $this->assertEquals('test webhook', $webhookModel->name);
+        $this->assertEquals('Robertbaelde\Hooked\Tests\Events\TestDefaultEvent', $webhookModel->event);
+        $this->assertEquals(['foo' => true], $webhookModel->payload);
+        
+        Queue::assertPushed(FireWebhook::class, function ($job) use ($webhookModel) {
+            return $job->webhook->is($webhookModel);
         });
     }
 }

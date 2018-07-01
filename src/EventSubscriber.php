@@ -4,6 +4,7 @@ namespace Robertbaelde\Hooked;
 
 use Robertbaelde\Hooked\Interfaces\WebhookEventInterface;
 use Robertbaelde\Hooked\Jobs\FireWebhook;
+use Robertbaelde\Hooked\Models\Webhook;
 
 class EventSubscriber
 {
@@ -15,7 +16,8 @@ class EventSubscriber
 
         collect(config('webhooks.default_webhooks'))->each(function($webhook) use ($event){
             if($event instanceof $webhook['event']){
-                FireWebhook::dispatch($event, $webhook);
+                $model = Webhook::fire($event, $webhook);
+                // FireWebhook::dispatch($event, $webhook);
             }
         });
     }

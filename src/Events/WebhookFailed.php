@@ -2,16 +2,17 @@
 
 namespace Robertbaelde\Hooked\Events;
 
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Queue\SerializesModels;
 use Robertbaelde\Hooked\Models\Webhook;
 
-class WebhookSuccessfull
+class WebhookFailed
 {
     use SerializesModels;
 
     public $webhook;
-    public $response;
+    public $e;
 
     /**
      * Create a new event instance.
@@ -19,9 +20,9 @@ class WebhookSuccessfull
      * @param  Order  $order
      * @return void
      */
-    public function __construct(Webhook $webhook, Response $response)
+    public function __construct(Webhook $webhook, ServerException $e)
     {
         $this->webhook = $webhook;
-        $this->response = $response;
+        $this->e = $e;
     }
 }

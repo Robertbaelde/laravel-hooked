@@ -9,8 +9,11 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
+use Robertbaelde\Hooked\Events\WebhookFailed;
 use Robertbaelde\Hooked\Events\WebhookSuccessfull;
 use Robertbaelde\Hooked\Jobs\FireWebhook;
+use Robertbaelde\Hooked\Models\Webhook;
 use Robertbaelde\Hooked\Tests\Events\TestDefaultEvent;
 use Robertbaelde\Hooked\Tests\TestCase;
 
@@ -35,13 +38,17 @@ class FireWebhookTest extends TestCase
 		// replace guzzle client
 		$client = new Client(['handler' => $handler]);
 		$this->app->instance(\GuzzleHttp\Client::class, $client);
+			
+		$webhookModel = Webhook::create([
+			'url' => 'http://foo.dev/',
+			'method' => 'POST',
+			'name' => 'test webhook',
+			'event' => 'Robertbaelde\Hooked\Tests\Events\TestDefaultEvent',
+			'payload' => ['foo' => true],
+		]);
+
 		$event = new TestDefaultEvent;
-		FireWebhook::dispatch($event, [
-			'event' => TestDefaultEvent::class,
-            'url' => 'http://foo.dev/',
-            'method' => 'POST',
-            'name' => "test webhook"
-	    ]);
+		FireWebhook::dispatch($webhookModel);
 
 	    $this->assertCount(1, $container);
 
@@ -51,9 +58,42 @@ class FireWebhookTest extends TestCase
 	    $this->assertEquals(['data' => ['foo' => true]], json_decode($request['request']->getBody()->getContents(), true));
 	    $this->assertEquals(200, $request['response']->getStatusCode());
 
-	    Event::assertDispatched(WebhookSuccessfull::class, function ($e) use ($event) {
-            return $e->event == $event;
+	    Event::assertDispatched(WebhookSuccessfull::class, function ($e) use ($webhookModel) {
+            return $e->webhook->is($webhookModel);
         });
+	}
+
+	/** @test */
+	function it_creates_a_new_job_when_the_webhook_failes()
+	{
+	   	Queue::fake();
+		Event::fake();
+		// create guzzle mock
+		$mock = new MockHandler([
+		    new Response(500, []),
+		]);
+		$handler = HandlerStack::create($mock);
+		// replace guzzle client
+		$client = new Client(['handler' => $handler]);
+		$this->app->instance(\GuzzleHttp\Client::class, $client);
+
+		$webhookModel = Webhook::create([
+			'url' => 'http://foo.dev/',
+			'method' => 'POST',
+			'name' => 'test webhook',
+			'event' => 'Robertbaelde\Hooked\Tests\Events\TestDefaultEvent',
+			'payload' => ['foo' => true],
+		]);
+
+		$job = new FireWebhook($webhookModel);
+	    $job->handle($client);
+	    
+		Event::assertNotDispatched(WebhookSuccessfull::class);
+	   	Event::assertDispatched(WebhookFailed::class, function ($e) use ($webhookModel) {
+            return $e->webhook->is($webhookModel);
+        });
+		
+
 	}
 
 
