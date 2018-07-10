@@ -34,15 +34,24 @@ class Webhook extends Model
             'payload' => $event->webhookPayload()
         ]);
         FireWebhook::dispatch($self);
-
     }
-    public function logResponse(Response $response)
+    public function logResponse(Response $response, $start_time)
     {
         return $this->calls()->create([
             'response_code' => $response->getStatusCode(),
             'response_body' => $response->getBody()->getContents(),
+            'duration' => microtime(true)-$start_time
         ])->fireEvent();
+    }
 
+    public function getNextFireTime()
+    {
+        $tries = $this->calls->count();
+        if($tries == 0){
+            return now();
+        }
+        $retry_shedule = collect(config('webhooks.default_retry_shedule'));
+        return now()->addSeconds($retry_shedule->take($tries)->sum());
     }
 
 }

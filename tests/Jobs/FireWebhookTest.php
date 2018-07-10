@@ -1,5 +1,6 @@
 <?php
 namespace Robertbaelde\Hooked\Tests\Jobs;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Handler\MockHandler;
@@ -40,7 +41,7 @@ class FireWebhookTest extends TestCase
 		$this->app->instance(\GuzzleHttp\Client::class, $client);
 			
 		$webhookModel = Webhook::create([
-			'url' => 'http://foo.dev/',
+			'url' => 'http://httpbin.org/post',
 			'method' => 'POST',
 			'name' => 'test webhook',
 			'event' => 'Robertbaelde\Hooked\Tests\Events\TestDefaultEvent',
@@ -62,13 +63,10 @@ class FireWebhookTest extends TestCase
 	    $call = $webhookModel->calls->first();
 	    $this->assertEquals(true, $call->successfull);
 	    $this->assertEquals(200, $call->response_code);
-	    $this->assertEquals("{'foo': 'bar'}", $call->response_body);
-
+	    // $this->assertEquals("{'foo': 'bar'}", $call->response_body);
 	    Event::assertDispatched(WebhookSuccessfull::class, function ($e) use ($call) {
             return $e->webhookcall->is($call);
         });
-
-
 	}
 
 	/** @test */
@@ -85,6 +83,9 @@ class FireWebhookTest extends TestCase
 		$client = new Client(['handler' => $handler]);
 		$this->app->instance(\GuzzleHttp\Client::class, $client);
 
+		Carbon::setTestNow(Carbon::create(2018, 1, 1, 12, 00, 00));   // 2018-01-01 12:00:00
+		config(['webhooks.default_retry_shedule' => [60]]);
+
 		$webhookModel = Webhook::create([
 			'url' => 'http://foo.dev/',
 			'method' => 'POST',
@@ -96,12 +97,15 @@ class FireWebhookTest extends TestCase
 		$job = new FireWebhook($webhookModel);
 	    $job->handle($client);
 	    
+	    Queue::assertPushed(FireWebhook::class, function ($job) use ($webhookModel) {
+	    	$this->assertEquals('2018-01-01 12:01:00', $job->delay->toDateTimeString());
+	    	return  true;
+        });
+
 		Event::assertNotDispatched(WebhookSuccessfull::class);
 	   	Event::assertDispatched(WebhookFailed::class, function ($e) use ($webhookModel) {
-            return $e->webhook->is($webhookModel);
+            return $e->webhook_call->webhook->is($webhookModel);
         });
-		
-
 	}
 
 

@@ -6,13 +6,13 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Queue\SerializesModels;
 use Robertbaelde\Hooked\Models\Webhook;
+use Robertbaelde\Hooked\Models\WebhookCall;
 
 class WebhookFailed
 {
     use SerializesModels;
 
-    public $webhook;
-    public $e;
+    public $webhook_call;
 
     /**
      * Create a new event instance.
@@ -20,9 +20,8 @@ class WebhookFailed
      * @param  Order  $order
      * @return void
      */
-    public function __construct(Webhook $webhook, ServerException $e)
+    public function __construct(WebhookCall $webhook_call)
     {
-        $this->webhook = $webhook;
-        $this->e = $e;
+        $this->webhook_call = $webhook_call;
     }
 }

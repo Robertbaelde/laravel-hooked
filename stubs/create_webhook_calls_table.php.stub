@@ -12,6 +12,7 @@ class CreateWebhooksCallsTable extends Migration
             $table->increments('id');
             $table->string('webhook_id');
             $table->integer('response_code');
+            $table->integer('duration');
             $table->json('response_body');
             $table->timestamps();
 

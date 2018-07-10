@@ -5,6 +5,7 @@ namespace  Robertbaelde\Hooked\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Robertbaelde\Hooked\Events\WebhookFailed;
 use Robertbaelde\Hooked\Events\WebhookSuccessfull;
 use Robertbaelde\Hooked\Interfaces\WebhookEventInterface;
 use Robertbaelde\Hooked\Jobs\FireWebhook;
@@ -30,7 +31,8 @@ class WebhookCall extends Model
     public function fireEvent()
     {
         if($this->successfull){
-            event(new WebhookSuccessfull($this));
+            return event(new WebhookSuccessfull($this));
         }
+        return event(new WebhookFailed($this));
     }
 }

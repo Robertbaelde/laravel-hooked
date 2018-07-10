@@ -40,17 +40,19 @@ class FireWebhook implements ShouldQueue
     {
         // $event = $this->event;
         $webhook = $this->webhook;
-
+        $start_time = microtime(true);
         try{
             $response = $client->request($webhook->method, $webhook->url, [
                 'json' => [
                     'data' => $webhook->payload
                 ]
             ]);
-            $webhook->logResponse($response);
+            $webhook->logResponse($response, $start_time);
         }
         catch (ServerException $e){
-            event(new WebhookFailed($webhook, $e));
+            // event(new WebhookFailed($webhook, $e));
+            $webhook->logResponse($e->getResponse(), $start_time);
+            Self::dispatch($webhook)->delay($webhook->getNextFireTime());
             // $this->nextInRetrySchema();
         }
     }
