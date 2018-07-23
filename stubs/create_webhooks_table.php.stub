@@ -10,6 +10,8 @@ class CreateWebhooksTable extends Migration
     {
         Schema::create('webhooks', function (Blueprint $table) {
             $table->increments('id');
+            $table->integer('ownerable_id')->unsigned()->nullable();
+            $table->string('ownerable_type')->nullable();
             $table->string('url');
             $table->string('method');
             $table->string('name');

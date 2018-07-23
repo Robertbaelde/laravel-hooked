@@ -4,6 +4,7 @@ namespace Robertbaelde\Hooked\Jobs;
 
 // use App\Webhook;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -52,8 +53,20 @@ class FireWebhook implements ShouldQueue
         catch (ServerException $e){
             // event(new WebhookFailed($webhook, $e));
             $webhook->logResponse($e->getResponse(), $start_time);
+
             Self::dispatch($webhook)->delay($webhook->getNextFireTime());
             // $this->nextInRetrySchema();
+        }
+        catch (GuzzleException $e)
+        {
+            $response = $e->getResponse();
+            if($response == null){
+                $webhook->logError($e->getMessage(), $start_time);
+            }
+            else{
+                $webhook->logResponse($response, $start_time);
+            }
+            Self::dispatch($webhook)->delay($webhook->getNextFireTime());
         }
     }
 }

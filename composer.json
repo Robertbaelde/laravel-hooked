@@ -38,10 +38,7 @@
     },
     "extra": {
         "laravel": {
-            "providers": ["Robertbaelde\\Hooked\\MongoServiceProvider"],
-            "aliases": {
-                "Hook": "Robertbaelde\\Hooked\\MongoFacade"
-            }
+            "providers": ["Robertbaelde\\Hooked\\HookedServiceProvider"]
         }
     }
 }
